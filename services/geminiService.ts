@@ -230,13 +230,19 @@ export const analyzeCustomerProfile = async (profile: CustomerProfile): Promise<
 
 /**
  * Generates a photorealistic image of the crystal bracelet.
- * NOW with Product Database integration!
+ * 已停用圖片生成功能 - 直接返回空字串
  */
 export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: CustomerProfile): Promise<string> => {
+  // 不再生成圖片，直接返回空字串
+  console.log("[圖片生成] 功能已停用，直接返回空字串");
+  return "";
+  
+  // 以下是原本的代碼（已註解，保留以便未來恢復）
+  /*
   // Guard Clause
   if (!analysis || !analysis.suggestedCrystals || analysis.suggestedCrystals.length === 0) {
       console.warn("Invalid analysis provided to image generator.");
-      return ""; // Or return a placeholder image URL
+      return ""; 
   }
 
   const crystalStr = analysis.suggestedCrystals.join(", ");
@@ -246,15 +252,12 @@ export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: 
   const productInfo = getProductDetails(mainCrystal);
 
   // BRANCH A: Real Photo Exists
-  // If we have a hardcoded URL in productDatabase.ts, use it directly.
   if (productInfo && productInfo.imageUrl) {
     console.log(`[ProductDB] Using real photo for ${mainCrystal}`);
     return productInfo.imageUrl;
   }
 
   // BRANCH B: Fixed Prompt (AI Generation with Standardization)
-  // If we don't have a photo but have a fixed prompt, use it.
-  // Otherwise, fallback to dynamic prompt.
   const promptToUse = productInfo?.fixedPrompt || `
     Professional commercial product photography of a single high-end beaded bracelet.
     Subject: A single strand crystal bracelet made of ${crystalStr}.
@@ -303,4 +306,5 @@ export const generateBraceletImage = async (analysis: CrystalAnalysis, profile: 
     console.error("Image Gen Error:", error);
     throw new Error("圖片生成連線逾時，請稍後再試。");
   }
+  */
 };
