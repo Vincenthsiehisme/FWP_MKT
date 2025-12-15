@@ -108,27 +108,24 @@ const App: React.FC = () => {
 
   // Progressive Loading Text Logic
   useEffect(() => {
-    if (loadingState === 'analyzing' || loadingState === 'generating_image') {
-      const messages = [
-        "正在繪製八字命盤...",
-        "分析五行能量分佈...",
-        "推算喜用神與互補元素...",
-        "正在凝聚專屬水晶能量..."
-      ];
-      let index = 0;
-      setLoadingMessage(messages[0]);
-      
-      const interval = setInterval(() => {
-        index = (index + 1) % messages.length;
-        if (loadingState === 'generating_image' && index < 2) {
-             index = 3;
-        }
-        setLoadingMessage(messages[index]);
-      }, 2500);
+  if (loadingState === 'analyzing') {  // ✅ 移除 || loadingState === 'generating_image'
+    const messages = [
+      "正在繪製八字命盤...",
+      "分析五行能量分佈...",
+      "推算喜用神與互補元素..."
+      // ❌ 刪除："正在凝聚專屬水晶能量..."
+    ];
+    let index = 0;
+    setLoadingMessage(messages[0]);
+    
+    const interval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      setLoadingMessage(messages[index]);
+    }, 2500);
 
-      return () => clearInterval(interval);
-    }
-  }, [loadingState]);
+    return () => clearInterval(interval);
+  }
+}, [loadingState]);
 
   const handleTestConnection = async () => {
     const trimmedUrl = googleScriptUrl.trim();
@@ -151,42 +148,47 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
-    setLoadingState('analyzing');
-    setErrorMessage(null);
+const handleFormSubmit = async (profileData: Omit<CustomerProfile, 'id' | 'createdAt'>) => {
+  setLoadingState('analyzing');
+  setErrorMessage(null);
 
-    const newProfile: CustomerProfile = {
-      ...profileData,
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      wishes: profileData.wishes || []
+  const newProfile: CustomerProfile = {
+    ...profileData,
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    wishes: profileData.wishes || []
+  };
+
+  try {
+    // 步驟 1: 分析八字
+    const analysis = await analyzeCustomerProfile(newProfile);
+    
+    // ❌ 移除：setLoadingState('generating_image');
+    // ❌ 移除：const imageUrl = await generateBraceletImage(analysis, newProfile);
+
+    // 步驟 2: 建立完整記錄（圖片欄位直接設為空字串）
+    const fullRecord: CustomerRecord = {
+      ...newProfile,
+      analysis,
+      generatedImageUrl: "", // ✅ 不再生成圖片
     };
 
-    try {
-      const analysis = await analyzeCustomerProfile(newProfile);
-      setLoadingState('generating_image');
-      const imageUrl = await generateBraceletImage(analysis, newProfile);
+    // 步驟 3: 儲存到資料庫
+    await dbService.addCustomer(fullRecord);
+    const updatedRecords = await dbService.getAllCustomers();
+    setCustomers(updatedRecords);
+    
+    // 步驟 4: 顯示結果
+    setCustomAnalysisRecord(fullRecord);
+    setLoadingState('completed');
+    setView('result');
 
-      const fullRecord: CustomerRecord = {
-        ...newProfile,
-        analysis,
-        generatedImageUrl: imageUrl,
-      };
-
-      await dbService.addCustomer(fullRecord);
-      const updatedRecords = await dbService.getAllCustomers();
-      setCustomers(updatedRecords);
-      
-      setCustomAnalysisRecord(fullRecord);
-      setLoadingState('completed');
-      setView('result');
-
-    } catch (error: any) {
-      console.error(error);
-      setErrorMessage(error.message || "發生未知錯誤");
-      setLoadingState('error');
-    }
-  };
+  } catch (error: any) {
+    console.error(error);
+    setErrorMessage(error.message || "發生未知錯誤");
+    setLoadingState('error');
+  }
+};
 
   const handleCustomShippingSubmit = async (details: ShippingDetails) => {
     if (!customAnalysisRecord) return;
