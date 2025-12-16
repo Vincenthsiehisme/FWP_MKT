@@ -24,9 +24,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
 
   const [isCopied, setIsCopied] = useState(false);
   
-  // ❌ 刪除這 3 行
-  // const [isImageZoomed, setIsImageZoomed] = useState(false);
-  
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isPaymentUrlCopied, setIsPaymentUrlCopied] = useState(false);
@@ -177,16 +174,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
       }
     };
   }, [record.analysis]);
-  
-  // Lock body scroll when zoomed
-  useEffect(() => {
-    if (isImageZoomed) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isImageZoomed]);
 
   const handleCopyAccount = () => {
     navigator.clipboard.writeText("0897979032175");
@@ -267,8 +254,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-up pb-12">
   
-    {/* ❌ 刪除：圖片 Lightbox Modal */}
-  
     {/* PAYMENT MODAL (PORTAL) */}
     {showPaymentModal && createPortal(paymentModalContent, document.body)}
 
@@ -283,7 +268,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
         </div>
 
         {/* Content Section */}
-         <div className="w-full p-6 md:p-10 flex flex-col justify-center relative max-w-4xl mx-auto">
+          <div className="w-full p-6 md:p-10 flex flex-col justify-center relative max-w-4xl mx-auto">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-mystic-600/5 blur-[60px] pointer-events-none"></div>
 
           <div className="relative z-10">
