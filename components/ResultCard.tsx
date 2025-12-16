@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CustomerRecord, ShippingDetails, PricingStrategy } from '../types';
@@ -11,38 +10,29 @@ interface ResultCardProps {
   record: CustomerRecord;
   onReset: () => void;
   onShippingSubmit: (details: ShippingDetails) => void;
-  isSyncing?: boolean; // New prop for network status
+  isSyncing?: boolean;
 }
 
 const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubmit, isSyncing = false }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  // NEW: Ref for the success section
   const successRef = useRef<HTMLDivElement>(null);
   
-  // FIX: Track mount state to prevent scrolling on page load/tab switch
   const isMounted = useRef(false);
 
   const [isCopied, setIsCopied] = useState(false);
   
-  // Payment Modal State
+  // ✅ 已刪除：const [isImageZoomed, setIsImageZoomed] = useState(false);
+  
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [isPaymentUrlCopied, setIsPaymentUrlCopied] = useState(false);
 
-  // Read More State for Analysis
-  // Optimization: Default to false (collapsed) for Mobile.
-  // Desktop expansion is now handled purely via CSS (md:max-h-none), preventing hydration mismatches.
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   
-  // Chart Logic
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<any>(null);
   
-  // LOGIC FIX: Instead of calculating "Weakest", we focus on the "Lucky Element" (The Solution)
   const [insightTarget, setInsightTarget] = useState<{name: string, type: 'weak' | 'lucky'} | null>(null);
 
-  // Define Pricing Strategy for Custom Orders (Five Elements)
-  // Strategy: Base 2400, Shipping 60 (Excluded).
-  // Size limit: > 16cm (threshold 16). Surcharge: 200.
   const CUSTOM_STRATEGY: PricingStrategy = {
       type: 'custom',
       basePrice: 2400,
@@ -51,8 +41,16 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
       surcharge: 200
   };
 
-  // Auto-scroll to success section when shipping details are present (order submitted)
-  // FIX: Only scroll if component is already mounted (i.e., user just clicked submit), not on initial render.
+  useEffect(() => {
+    if (isMounted.current) {
+        if (record.shippingDetails && successRef.current) {
+            successRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    } else {
+        isMounted.current = true;
+    }
+  }, [record.shippingDetails]);
+
   useEffect(() => {
     if (showPaymentModal) {
       document.body.style.overflow = 'hidden';
@@ -62,10 +60,10 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
     return () => { document.body.style.overflow = ''; };
   }, [showPaymentModal]);
 
+  // ✅ 已刪除：控制圖片放大的 useEffect
+
   useEffect(() => {
-    // Check if Chart is available on window object explicitly cast to any to avoid TS errors
     if (record.analysis && chartRef.current && (window as any).Chart) {
-      // Data is now strictly typed as number in the Interface/Schema
       const elements = record.analysis.fiveElements;
       
       const gold = elements.gold;
@@ -76,12 +74,8 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
 
       const dataValues = [gold, wood, water, fire, earth];
 
-      // LOGIC UPDATE: Use the AI-determined Lucky Element directly
-      // This ensures consistency with the text report.
-      // We extract the first character (e.g., "火" from "火 (Fire)") just in case
       let luckyChar = record.analysis.luckyElement ? record.analysis.luckyElement.charAt(0) : '';
       
-      // Fallback: If luckyElement is missing, find lowest score (Legacy logic)
       if (!luckyChar) {
           const elementMap = [
               { name: '金', score: gold },
@@ -96,7 +90,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
           setInsightTarget({ name: luckyChar, type: 'lucky' });
       }
 
-      // Destroy previous instance
       if (chartInstance.current) {
         chartInstance.current.destroy();
       }
@@ -104,19 +97,18 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
       chartInstance.current = new (window as any).Chart(chartRef.current, {
         type: 'radar',
         data: {
-          // Pure text labels without icons for professional spiritual look
           labels: ['金', '木', '水', '火', '土'],
           datasets: [{
             label: '五行能量',
             data: dataValues,
-            backgroundColor: 'rgba(217, 70, 239, 0.4)', // mystic-500 with higher opacity for glow
-            borderColor: '#e879f9', // lighter mystic
+            backgroundColor: 'rgba(217, 70, 239, 0.4)',
+            borderColor: '#e879f9',
             borderWidth: 2,
             pointBackgroundColor: '#fff',
             pointBorderColor: '#d946ef',
             pointHoverBackgroundColor: '#fff',
             pointHoverBorderColor: '#d946ef',
-            pointRadius: 4, // Slightly larger points
+            pointRadius: 4,
             pointHoverRadius: 6,
           }]
         },
@@ -132,15 +124,15 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                 lineWidth: 1
               },
               grid: { 
-                color: 'rgba(255, 255, 255, 0.05)', // Very faint grid
+                color: 'rgba(255, 255, 255, 0.05)',
                 circular: true
               },
               pointLabels: {
-                color: '#e2e8f0', // slate-200
+                color: '#e2e8f0',
                 font: {
                   family: '"Noto Sans TC", sans-serif',
                   size: 14,
-                  weight: '700' // Bolder text for character
+                  weight: '700'
                 },
                 padding: 12
               },
@@ -191,19 +183,20 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
     });
   };
 
+  // ✅ 已刪除：downloadImage 函數
+
   if (!record.analysis) return null;
 
-  // The Lightbox Content (Rendered via Portal)
+  // ✅ 已刪除：lightboxContent 定義
+
   // Payment Modal Content (Portal)
   const paymentModalContent = (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 font-sans touch-none" style={{ margin: 0 }}>
-        {/* Backdrop */}
         <div 
            className="absolute inset-0 bg-black/90 backdrop-blur-md animate-fade-in" 
            onClick={() => setShowPaymentModal(false)}
         ></div>
         
-        {/* Modal Card - Compact & Center */}
         <div 
           className="relative z-10 bg-slate-900 border border-slate-700 rounded-3xl p-6 w-full max-w-[320px] shadow-2xl animate-scale-in flex flex-col gap-5 text-center"
           onClick={(e) => e.stopPropagation()}
@@ -253,22 +246,19 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
 
   return (
     <div className="w-full max-w-5xl mx-auto animate-fade-in-up pb-12">
-  
-    {/* PAYMENT MODAL (PORTAL) */}
-    {showPaymentModal && createPortal(paymentModalContent, document.body)}
+      
+      {/* ✅ 已刪除：圖片 Lightbox Modal */}
 
-    {/* ✅ 改成單欄版面，移除 lg:flex-row */}
-             <div className="text-slate-500 flex flex-col items-center p-6 text-center cursor-default">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-               </svg>
-               <span className="text-sm font-sans">圖片生成失敗</span>
-             </div>
-          )}
-        </div>
+      {/* PAYMENT MODAL (PORTAL) */}
+      {showPaymentModal && createPortal(paymentModalContent, document.body)}
 
-        {/* Content Section */}
-          <div className="w-full p-6 md:p-10 flex flex-col justify-center relative max-w-4xl mx-auto">
+      {/* ✅ 改成單欄版面 */}
+      <div className="flex flex-col gap-0 bg-slate-800/40 backdrop-blur-2xl rounded-[2rem] overflow-hidden border border-white/10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)]">
+        
+        {/* ✅ 已刪除：整個 Image Section */}
+
+        {/* Content Section - ✅ 改成全寬 */}
+        <div className="w-full p-6 md:p-10 flex flex-col justify-center relative max-w-4xl mx-auto">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-mystic-600/5 blur-[60px] pointer-events-none"></div>
 
           <div className="relative z-10">
@@ -276,7 +266,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
             <div className="mb-8 border-b border-white/5 pb-6">
                 <div className="flex flex-col gap-3 mb-4">
                     <div className="flex items-center gap-3 flex-wrap">
-                        {/* Mode Badge */}
                         {record.isTimeUnsure ? (
                             <span className="px-2.5 py-1 bg-gold-900/40 border border-gold-500/50 rounded-lg text-[10px] text-gold-400 font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(251,191,36,0.15)] flex items-center gap-1.5">
                                 <span className="relative flex h-2 w-2">
@@ -300,7 +289,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                 
                 {/* Wish Tags - Integrated Layout */}
                 <div className="flex items-start gap-3">
-                   {/* Label Icon */}
                    <div className="mt-1 shrink-0 opacity-60">
                       {record.isTimeUnsure ? (
                          <div className="text-xs font-sans text-gold-400 flex flex-col items-center gap-0.5">
@@ -317,7 +305,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                         {record.wishes && Array.isArray(record.wishes) && record.wishes.length > 0 ? (
                             record.wishes.map((w, i) => {
                                 const isPrimary = i < 3;
-                                // Dynamic Color Logic based on Mode
                                 const primaryStyle = record.isTimeUnsure 
                                     ? 'bg-gold-500/10 text-gold-300 border-gold-500/30 shadow-[0_0_8px_rgba(251,191,36,0.1)]' 
                                     : 'bg-mystic-500/10 text-mystic-300 border-mystic-500/30 shadow-[0_0_8px_rgba(217,70,239,0.1)]';
@@ -350,11 +337,9 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                   {/* Left: Enhanced Chart */}
                   <div className="relative h-[240px] w-full md:w-1/2 flex items-center justify-center p-2 flex-col">
                     <canvas ref={chartRef}></canvas>
-                    {/* Glowing Core */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
                        <div className="w-16 h-16 bg-mystic-500/20 blur-xl rounded-full"></div>
                     </div>
-                    {/* Optional Label for Incomplete Data */}
                     {record.isTimeUnsure && (
                         <span className="text-[10px] text-gold-500/80 mt-[-20px] mb-2 font-sans opacity-90 font-medium bg-black/20 px-2 py-0.5 rounded backdrop-blur-sm">
                             ⚠️ 三柱推算 (僅供參考)
@@ -418,7 +403,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                 </div>
               </div>
 
-              {/* Energy Analysis Text (Hybrid Collapsible/Always-Open) */}
+              {/* Energy Analysis Text */}
               <div>
                 <button 
                   onClick={() => setIsAnalysisExpanded(!isAnalysisExpanded)}
@@ -430,17 +415,11 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                     </span>
                     詳細能量報告
                   </div>
-                  {/* Arrow: Hidden on Desktop */}
                   <span className={`text-sm text-slate-500 transform transition-transform duration-300 md:hidden ${isAnalysisExpanded ? 'rotate-180' : ''}`}>
                     ▼
                   </span>
                 </button>
                 
-                {/* 
-                   Content Visibility Logic:
-                   - Mobile: Uses max-h-[1500px]/max-h-0 based on React State
-                   - Desktop (md:): Forces max-h-none (expanded) & opacity-100 regardless of state
-                */}
                 <div className={`bg-slate-900/40 rounded-3xl border relative overflow-hidden transition-all duration-500 ease-in-out 
                     ${isAnalysisExpanded ? 'max-h-[1500px] opacity-100 border-white/5' : 'max-h-0 opacity-0 border-transparent'}
                     md:max-h-none md:opacity-100 md:border-white/5
@@ -463,17 +442,13 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
             <ShippingForm 
                 onSubmit={onShippingSubmit} 
                 isSubmitting={isSyncing} 
-                pricingStrategy={CUSTOM_STRATEGY} // Pass Custom Strategy
+                pricingStrategy={CUSTOM_STRATEGY}
             />
         ) : (
-            /* 
-              SUCCESS SECTION (Ref attached here for auto-scroll)
-            */
             <div 
                ref={successRef}
                className="mt-8 bg-slate-800/40 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-xl relative overflow-hidden animate-fade-in-up"
             >
-                {/* Header */}
                 <div className="text-center mb-10">
                    <div className="w-20 h-20 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.2)]">
                       <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -482,7 +457,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                    <p className="text-slate-300 font-sans">請完成以下步驟以正式成立訂單</p>
                 </div>
 
-                {/* Timeline Steps */}
                 <div className="space-y-8 max-w-lg mx-auto relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-700/50">
                     
                     {/* Step 1 */}
@@ -490,9 +464,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                         <div className="absolute left-0 top-1 w-10 h-10 bg-slate-800 border border-slate-600 rounded-full flex items-center justify-center text-slate-300 font-bold z-10 shadow-lg font-display">1</div>
                         <h4 className="text-lg font-bold text-white mb-2 font-sans">確認付款</h4>
                         <div className="mb-3">
-                           {/* Calculate Total for Display */}
                            <p className="text-sm text-slate-400 font-sans">總金額 <span className="text-gold-400 font-bold font-sans">${(record.shippingDetails.totalPrice).toLocaleString()}</span></p>
-                           {/* Discount Badge */}
                            {record.shippingDetails.discountAmount && record.shippingDetails.discountAmount > 0 && (
                                <div className="inline-block mt-2 px-3 py-1 bg-green-900/20 border border-green-500/20 rounded text-xs text-green-400 font-bold">
                                    已折抵 ${record.shippingDetails.discountAmount} (優惠碼: {record.shippingDetails.couponCode})
@@ -500,7 +472,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                            )}
                         </div>
                         
-                        {/* ECPay Button (Mobile Fixed - MODAL TRIGGER) */}
                         <button
                             onClick={() => setShowPaymentModal(true)}
                             className="w-[95%] mx-auto block py-3 mb-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl flex items-center justify-center gap-2 text-white font-bold shadow-lg shadow-emerald-900/20 hover:scale-[1.02] transition-all group font-sans border border-emerald-400/30 cursor-pointer"
@@ -516,7 +487,6 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                              <span className="h-px bg-slate-700 w-12"></span>
                         </div>
 
-                        {/* Bank Info Card */}
                         <div className="bg-slate-900/80 p-4 rounded-xl border border-gold-500/30 relative group overflow-hidden">
                            <div className="absolute top-0 right-0 w-16 h-16 bg-gold-500/10 rounded-full blur-xl pointer-events-none"></div>
                            <p className="text-xs text-slate-400 mb-1 font-sans">玉山銀行 (808)</p>
@@ -547,7 +517,7 @@ const ResultCard: React.FC<ResultCardProps> = ({ record, onReset, onShippingSubm
                         </div>
                     </div>
 
-                    {/* Step 2 (Highlighted) */}
+                    {/* Step 2 */}
                     <div className="relative pl-14">
                         <div className="absolute left-0 top-1 w-10 h-10 bg-mystic-600 border border-mystic-400 rounded-full flex items-center justify-center text-white font-bold z-10 shadow-[0_0_15px_rgba(192,38,211,0.5)] animate-pulse-slow font-display">2</div>
                         <h4 className="text-lg font-bold text-mystic-200 mb-1 font-sans">私訊確認 (關鍵步驟)</h4>
