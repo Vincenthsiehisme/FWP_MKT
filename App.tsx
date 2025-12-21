@@ -15,7 +15,7 @@ import { ProductEntry } from './services/productDatabase';
 import { COUPON_CONFIG } from './config/coupons';
 
 // --- GLOBAL CONFIGURATION (PaaS Environment Variable) ---
-const HARDCODED_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymE_hk3XoyMK45dluWCASGzVmwNU_TSj2wgmNVNkSseqRW7bEOCRzwZSFe8KfoNEsDcg/exec"; 
+const HARDCODED_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbymE_hk3XoyMK45dluWCASGzVmwNU_TSj2wgmNVNkSseqRW7bEOCRzwZSFe8KfoNEsDcg/exec";
 
 const App: React.FC = () => {
   // Navigation State
